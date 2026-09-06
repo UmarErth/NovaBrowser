@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nova Gateway Browser</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="/uv/uv.bundle.js"></script>
+  <script src="/uv/uv.config.js"></script>
+  <style>
+    :root { 
+      --cyan: #00f0ff; 
+      --violet: #8b5cf6; 
+      --magenta: #ec4899; 
+      --bg: #030712; 
+      --header-bg: rgba(15, 23, 42, 0.75);
+      --input-bg: rgba(3, 7, 18, 0.6);
+      --border: rgba(255, 255, 255, 0.12);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body { 
+      background-color: var(--bg); 
+      color: #f8fafc; 
+      font-family: 'Plus Jakarta Sans', sans-serif; 
+      height: 100vh; 
+      display: flex; 
+      flex-direction: column;
+      overflow: hidden; 
+      position: relative; 
+    }
+
+    /* Background Animated Orbs */
+    .bg-mesh { position: absolute; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; }
+    .orb { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.3; will-change: transform; }
+    .orb-1 { width: 500px; height: 500px; background: radial-gradient(circle, var(--cyan), transparent 70%); top: -15%; left: -10%; animation: float-1 14s ease-in-out infinite alternate; }
+    .orb-2 { width: 600px; height: 600px; background: radial-gradient(circle, var(--violet), transparent 70%); bottom: -20%; right: -10%; animation: float-2 18s ease-in-out infinite alternate; }
+    .orb-3 { width: 400px; height: 400px; background: radial-gradient(circle, var(--magenta), transparent 70%); top: 40%; left: 50%; animation: float-3 12s ease-in-out infinite alternate; }
+    @keyframes float-1 { 0% { transform: translate3d(0, 0, 0) scale(1); } 100% { transform: translate3d(80px, 60px, 0) scale(1.15); } }
+    @keyframes float-2 { 0% { transform: translate3d(0, 0, 0) scale(1); } 100% { transform: translate3d(-70px, -90px, 0) scale(1.1); } }
+    @keyframes float-3 { 0% { transform: translate3d(-50%, -50%, 0) scale(0.9); } 100% { transform: translate3d(-30%, -40%, 0) scale(1.2); } }
+
+    /* Browser Control Bar */
+    .browser-bar {
+      position: relative;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: var(--header-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .nav-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .icon-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: #94a3b8;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    .icon-btn:active {
+      transform: translateY(0);
+    }
+
+    .icon-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Address Bar Form */
+    .address-form {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      position: relative;
+    }
+
+    .address-wrapper {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0 14px;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .address-wrapper:focus-within {
+      border-color: rgba(0, 240, 255, 0.6);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+      background: rgba(3, 7, 18, 0.85);
+    }
+
+    .site-icon {
+      color: var(--cyan);
+      margin-right: 10px;
+      display: flex;
+      align-items: center;
+    }
+
+    .address-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 0.9rem;
+      font-family: inherit;
+      padding: 10px 0;
+    }
+
+    .address-input::placeholder { color: #64748b; }
+
+    /* Action Badges & Buttons */
+    .status-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #eab308;
+      box-shadow: 0 0 10px #eab308;
+    }
+
+    .status-dot.ready { background: var(--cyan); box-shadow: 0 0 10px var(--cyan); }
+
+    /* Browser Content Area */
+    .browser-viewport {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      height: calc(100vh - 57px);
+      z-index: 10;
+    }
+
+    iframe#web-frame {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #fff;
+      display: none;
+    }
+
+    /* Home Splash Hero Screen */
+    .home-splash {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 20;
+    }
+
+    .glass-card {
+      width: 100%;
+      max-width: 560px;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(28px) saturate(200%);
+      -webkit-backdrop-filter: blur(28px) saturate(200%);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 28px;
+      padding: 40px;
+      text-align: center;
+      box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.8);
+      animation: card-entrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes card-entrance { 
+      from { opacity: 0; transform: translate3d(0, 20px, 0) scale(0.96); } 
+      to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); } 
+    }
+
+    h1 { font-size: 2.2rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 8px; color: #fff; }
+    h1 .glow-text { 
+      background: linear-gradient(135deg, var(--cyan) 0%, #a855f7 50%, var(--magenta) 100%); 
+      background-size: 200% auto; 
+      -webkit-background-clip: text; 
+      -webkit-text-fill-color: transparent; 
+      animation: shine 6s linear infinite; 
+    }
+    @keyframes shine { to { background-position: 200% center; } }
+    
+    p.subtitle { color: #94a3b8; font-size: 0.95rem; margin-bottom: 28px; font-weight: 500; }
+
+    /* Quick Shortcuts Grid */
+    .shortcuts-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .shortcut-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      color: #e2e8f0;
+      font-size: 0.75rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .shortcut-card:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--cyan);
+      transform: translateY(-2px);
+    }
+
+    .shortcut-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Orbs -->
+  <div class="bg-mesh">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Top Browser Navigation Bar -->
+  <header class="browser-bar">
+    <div class="nav-group">
+      <button class="icon-btn" id="btn-back" title="Back">
+        <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-forward" title="Forward">
+        <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-reload" title="Reload">
+        <svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </button>
+      <button class="icon-btn" id="btn-home" title="Home">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </button>
+    </div>
+
+    <!-- Address / Search Input -->
+    <form class="address-form" id="address-form">
+      <div class="address-wrapper">
+        <div class="site-icon">
+          <svg style="width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <input id="address-input" class="address-input" type="text" placeholder="Search Brave or type URL..." autocomplete="off" />
+      </div>
+    </form>
+
+    <!-- Connection Status -->
+    <div class="status-container">
+      <div id="status-dot" class="status-dot"></div>
+      <span id="status-text">Connecting</span>
+    </div>
+  </header>
+
+  <!-- Main Viewport Layer -->
+  <main class="browser-viewport">
+    
+    <!-- Home Dashboard Splash -->
+    <div id="home-splash" class="home-splash">
+      <div class="glass-card">
+        <h1>NOVA <span class="glow-text">GATEWAY</span></h1>
+        <p class="subtitle">Enter a website URL or search query to begin browsing.</p>
+        
+        <!-- Quick App Launchers -->
+        <div class="shortcuts-grid">
+          <div class="shortcut-card" onclick="launchUrl('https://google.com')">
+            <div class="shortcut-icon" style="background: rgba(234, 67, 53, 0.2); color: #ea4335;">G</div>
+            <span>Google</span>
+          </div>
+          <div class="shortcut-card" onclick="launchUrl('https://youtube.com')">
+            <div class="shortcut-icon" style="background: rgba(255, 0, 0, 0.2); color: #ff0000;">Y</div>
+            <span>YouTube</span>
+          </div>
+          <div class="shortcut-card" onclick="launchUrl('https://discord.com')">
+            <div class="shortcut-icon" style="background: rgba(88, 101, 242, 0.2); color: #5865f2;">D</div>
+            <span>Discord</span>
+          </div>
+          <div class="shortcut-card" onclick="launchUrl('https://wikipedia.org')">
+            <div class="shortcut-icon" style="background: rgba(255, 255, 255, 0.2); color: #fff;">W</div>
+            <span>Wikipedia</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Web Browser Iframe -->
+    <iframe id="web-frame"></iframe>
+  </main>
+
+  <script>
+    const form = document.getElementById('address-form');
+    const input = document.getElementById('address-input');
+    const statusText = document.getElementById('status-text');
+    const statusDot = document.getElementById('status-dot');
+    const iframe = document.getElementById('web-frame');
+    const homeSplash = document.getElementById('home-splash');
+
+    // Controls
+    const btnBack = document.getElementById('btn-back');
+    const btnForward = document.getElementById('btn-forward');
+    const btnReload = document.getElementById('btn-reload');
+    const btnHome = document.getElementById('btn-home');
+
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(() => {
+          statusText.innerText = "Engine Ready";
+          statusDot.className = "status-dot ready";
+        })
+        .catch(() => {
+          statusText.innerText = "Engine Ready";
+          statusDot.className = "status-dot ready";
+        });
+    } else {
+      statusText.innerText = "Engine Ready";
+      statusDot.className = "status-dot ready";
+    }
+
+    // Process & Launch Requests
+    function launchUrl(url) {
+      let query = url.trim();
+      if (!query) return;
+
+      if (!query.startsWith('http://') && !query.startsWith('https://')) {
+        if (query.includes('.') && !query.includes(' ')) {
+          query = 'https://' + query;
+        } else {
+          query = 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(query);
+        }
+      }
+
+      // Hide Splash & Display Web Frame
+      homeSplash.style.display = 'none';
+      iframe.style.display = 'block';
+
+      // Encode URL with Ultraviolet
+      const proxiedUrl = __uv$config.prefix + __uv$config.encodeUrl(query);
+      iframe.src = proxiedUrl;
+      input.value = query;
+    }
+
+    // Form Event Handler
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      launchUrl(input.value);
+    });
+
+    // Browser Control Button Actions
+    btnBack.addEventListener('click', () => {
+      try { iframe.contentWindow.history.back(); } catch(e) {}
+    });
+
+    btnForward.addEventListener('click', () => {
+      try { iframe.contentWindow.history.forward(); } catch(e) {}
+    });
+
+    btnReload.addEventListener('click', () => {
+      try { iframe.contentWindow.location.reload(); } catch(e) {}
+    });
+
+    btnHome.addEventListener('click', () => {
+      iframe.src = 'about:blank';
+      iframe.style.display = 'none';
+      homeSplash.style.display = 'flex';
+      input.value = '';
+    });
+
+    // Sync input bar when iframe location updates
+    iframe.addEventListener('load', () => {
+      try {
+        const loc = iframe.contentWindow.location.href;
+        if (loc.includes(__uv$config.prefix)) {
+          const rawUrl = loc.split(__uv$config.prefix)[1];
+          if (rawUrl) {
+            input.value = __uv$config.decodeUrl(rawUrl);
+          }
+        }
+      } catch (e) {
+        // Handle cross-origin restrictions gracefully
+      }
+    });
+  </script>
+</body>
+</html>
