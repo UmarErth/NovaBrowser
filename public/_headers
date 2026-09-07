@@ -1,0 +1,13 @@
+/sw.js
+  Cache-Control: no-cache
+  Service-Worker-Allowed: /
+/uv/uv.config.js
+  Cache-Control: no-cache
+/uv.config.js
+  Cache-Control: no-cache
+/codec.js
+  Cache-Control: no-cache
+/transport.js
+  Cache-Control: no-cache
+/*
+  Referrer-Policy: no-referrer

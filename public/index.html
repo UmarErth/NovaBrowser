@@ -300,14 +300,16 @@
         <div class="site-icon">
           <svg style="width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         </div>
-        <input id="address-input" class="address-input" type="text" placeholder="Search Brave or type URL..." autocomplete="off" />
+        <input id="address-input" class="address-input" type="text" aria-label="Website address or search" placeholder="Search Brave or type URL..." autocomplete="off" />
+        <button class="icon-btn" type="submit" aria-label="Go">Go</button>
       </div>
     </form>
 
+    <button id="btn-adblock" class="status-container" type="button" aria-pressed="true" title="Block common advertising domains; turn off if a site breaks">Ads blocked</button>
     <!-- Connection Status -->
     <div class="status-container">
       <div id="status-dot" class="status-dot"></div>
-      <span id="status-text">Connecting</span>
+      <span id="status-text" role="status">Connecting</span>
     </div>
   </header>
 
@@ -343,7 +345,7 @@
     </div>
 
     <!-- Active Web Browser Iframe -->
-    <iframe id="web-frame"></iframe>
+    <iframe id="web-frame" title="Website" allow="autoplay; fullscreen; gamepad" allowfullscreen></iframe>
   </main>
 
   <script>
@@ -360,24 +362,66 @@
     const btnReload = document.getElementById('btn-reload');
     const btnHome = document.getElementById('btn-home');
 
-    // Service Worker Registration
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
-        .then(() => {
-          statusText.innerText = "Engine Ready";
-          statusDot.className = "status-dot ready";
-        })
-        .catch(() => {
-          statusText.innerText = "Engine Ready";
-          statusDot.className = "status-dot ready";
-        });
-    } else {
-      statusText.innerText = "Engine Ready";
-      statusDot.className = "status-dot ready";
+    const adblockButton = document.getElementById('btn-adblock');
+    let adblockEnabled = true;
+    try { adblockEnabled = localStorage.getItem('nova-adblock') !== 'false'; } catch {}
+    function updateAdblockLabel() {
+      adblockButton.textContent = adblockEnabled ? 'Ads blocked' : 'Ads allowed';
+      adblockButton.setAttribute('aria-pressed', String(adblockEnabled));
     }
+    updateAdblockLabel();
+    function syncAdblock() {
+      return new Promise((resolve, reject) => {
+        const channel = new MessageChannel();
+        const timer = setTimeout(() => { channel.port1.close(); reject(new Error('Settings update timed out')); }, 5000);
+        channel.port1.onmessage = () => { clearTimeout(timer); channel.port1.close(); resolve(); };
+        navigator.serviceWorker.controller.postMessage({ type: 'set-adblock', enabled: adblockEnabled }, [channel.port2]);
+      });
+    }
+    const engineReady = (async () => {
+      if (!isSecureContext || !('serviceWorker' in navigator)) throw new Error('Use HTTPS and a browser with service workers');
+      const registration = await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
+      const installing = registration.installing || registration.waiting;
+      if (installing && installing.state !== 'activated') await new Promise((resolve, reject) => {
+        const changed = () => {
+          if (installing.state === 'activated' || installing.state === 'redundant') {
+            clearTimeout(timer);
+            installing.removeEventListener('statechange', changed);
+            installing.state === 'activated' ? resolve() : reject(new Error('Engine update failed; reload to retry'));
+          }
+        };
+        const timer = setTimeout(() => { installing.removeEventListener('statechange', changed); reject(new Error('Engine update timed out')); }, 15000);
+        installing.addEventListener('statechange', changed);
+      });
+      await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Engine startup timed out; reload to retry')), 15000)),
+      ]);
+      if (!navigator.serviceWorker.controller) await new Promise((resolve, reject) => {
+        const changed = () => { clearTimeout(timer); resolve(); };
+        const timer = setTimeout(() => { navigator.serviceWorker.removeEventListener('controllerchange', changed); reject(new Error('Reload to activate the engine')); }, 15000);
+        navigator.serviceWorker.addEventListener('controllerchange', changed, { once: true });
+      });
+      await syncAdblock();
+      statusText.textContent = 'Ready';
+      statusDot.className = 'status-dot ready';
+    })();
+    engineReady.catch(error => {
+      statusText.textContent = error.message;
+      statusDot.className = 'status-dot';
+    });
+    adblockButton.addEventListener('click', async () => {
+      try {
+        await engineReady;
+        adblockEnabled = !adblockEnabled;
+        try { localStorage.setItem('nova-adblock', String(adblockEnabled)); } catch {}
+        await syncAdblock();
+        updateAdblockLabel();
+      } catch (error) { statusText.textContent = error.message; }
+    });
 
     // Process & Launch Requests
-    function launchUrl(url) {
+    async function launchUrl(url) {
       let query = url.trim();
       if (!query) return;
 
@@ -385,17 +429,18 @@
         if (query.includes('.') && !query.includes(' ')) {
           query = 'https://' + query;
         } else {
-          query = 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(query);
+          query = 'https://search.brave.com/search?q=' + encodeURIComponent(query);
         }
       }
 
+      try { await engineReady; } catch { return; }
       // Hide Splash & Display Web Frame
       homeSplash.style.display = 'none';
       iframe.style.display = 'block';
 
       // Encode URL with Ultraviolet
-      const proxiedUrl = __uv$config.prefix + __uv$config.encodeUrl(query);
-      iframe.src = proxiedUrl;
+      const destinationUrl = __uv$config.prefix + __uv$config.encodeUrl(query);
+      iframe.src = destinationUrl;
       input.value = query;
     }
 
