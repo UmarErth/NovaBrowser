@@ -44,6 +44,46 @@
     @keyframes float-3 { 0% { transform: translate3d(-50%, -50%, 0) scale(0.9); } 100% { transform: translate3d(-30%, -40%, 0) scale(1.2); } }
 
     /* Browser Control Bar */
+    .browser-tabs {
+      position: relative;
+      z-index: 101;
+      height: 40px;
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      padding: 5px 10px 0;
+      background: #08111e;
+      border-bottom: 1px solid #243650;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+    }
+    .browser-tabs::-webkit-scrollbar { display: none; }
+    .browser-tab {
+      height: 34px;
+      min-width: 118px;
+      max-width: 220px;
+      flex: 0 1 190px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 8px 0 11px;
+      border: 1px solid transparent;
+      border-bottom: 0;
+      border-radius: 10px 10px 0 0;
+      background: #101c2d;
+      color: #91a6c5;
+      font: 700 11px 'Plus Jakarta Sans', sans-serif;
+      cursor: pointer;
+    }
+    .browser-tab:hover { background: #16253b; color: #e6effc; }
+    .browser-tab.active { background: #1a2a42; color: #f4f8ff; border-color: #314866; }
+    .browser-tab-icon { width: 18px; height: 18px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 5px; background: #29405f; color: #b8d5ff; font-size: 10px; }
+    .browser-tab-title { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+    .browser-tab-close { width: 20px; height: 20px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 6px; color: #8095b4; font-size: 15px; }
+    .browser-tab-close:hover { background: #ffffff17; color: #fff; }
+    .browser-new-tab { width: 29px; height: 29px; flex: 0 0 29px; margin: 0 0 3px 2px; border: 0; border-radius: 8px; background: #17263b; color: #abc1e2; font-size: 18px; cursor: pointer; }
+
     .browser-bar {
       position: relative;
       z-index: 100;
@@ -176,7 +216,7 @@
       z-index: 10;
     }
 
-    iframe#web-frame {
+    iframe.web-frame {
       width: 100%;
       height: 100%;
       border: none;
@@ -348,7 +388,7 @@
     }
     .status-dot { background: #d7a958; box-shadow: none; }
     .status-dot.ready { background: #72d6b3; box-shadow: 0 0 0 4px rgba(114,214,179,.09); }
-    .browser-viewport { height: calc(100vh - 68px); }
+    .browser-viewport { height: calc(100vh - 108px); }
     .home-splash { justify-content: flex-start; padding: clamp(62px,10vh,110px) 24px 40px; }
     .glass-card {
       max-width: 680px;
@@ -378,7 +418,8 @@
       .address-form { order: 3; min-width: calc(100% - 156px); }
       .status-container { font-size: 0; width: 36px; padding: 0; justify-content: center; }
       #btn-adblock { display: none; }
-      .browser-viewport { height: calc(100vh - 106px); }
+      .browser-viewport { height: calc(100vh - 146px); }
+      .browser-tab { min-width: 105px; flex-basis: 145px; }
       .home-splash { padding-top: 44px; }
       .shortcuts-grid { grid-template-columns: repeat(2,1fr); }
     }
@@ -393,6 +434,10 @@
     <div class="orb orb-2"></div>
     <div class="orb orb-3"></div>
   </div>
+
+  <nav class="browser-tabs" id="browser-tabs" aria-label="Browser tabs">
+    <button class="browser-new-tab" id="browser-new-tab" type="button" title="New tab" aria-label="New tab">+</button>
+  </nav>
 
   <!-- Top Browser Navigation Bar -->
   <header class="browser-bar">
@@ -466,7 +511,7 @@
     </div>
 
     <!-- Active Web Browser Iframe -->
-    <iframe id="web-frame" title="Website" allow="autoplay; fullscreen; gamepad" allowfullscreen></iframe>
+    <iframe id="web-frame" class="web-frame" title="Website" allow="autoplay; fullscreen; gamepad" allowfullscreen></iframe>
   </main>
 
   <script>
@@ -474,8 +519,100 @@
     const input = document.getElementById('address-input');
     const statusText = document.getElementById('status-text');
     const statusDot = document.getElementById('status-dot');
-    const iframe = document.getElementById('web-frame');
+    let iframe = document.getElementById('web-frame');
     const homeSplash = document.getElementById('home-splash');
+    const tabsHost = document.getElementById('browser-tabs');
+    const newTabButton = document.getElementById('browser-new-tab');
+    let tabCounter = 0;
+    let activeTabId = 0;
+    const tabs = [];
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[character]));
+    }
+
+    function currentTab() { return tabs.find(tab => tab.id === activeTabId); }
+
+    function renderTabs() {
+      tabsHost.querySelectorAll('.browser-tab').forEach(tab => tab.remove());
+      tabs.forEach(tab => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `browser-tab${tab.id === activeTabId ? ' active' : ''}`;
+        button.dataset.tabId = String(tab.id);
+        button.innerHTML = `<span class="browser-tab-icon" aria-hidden="true">${tab.home ? '⌂' : '●'}</span><span class="browser-tab-title">${escapeHtml(tab.title)}</span><span class="browser-tab-close" data-close="${tab.id}" aria-label="Close tab">×</span>`;
+        button.addEventListener('click', event => {
+          const close = event.target.closest('[data-close]');
+          if (close) closeTab(Number(close.dataset.close));
+          else activateTab(tab.id);
+        });
+        tabsHost.insertBefore(button, newTabButton);
+      });
+    }
+
+    function syncActiveView() {
+      const tab = currentTab();
+      if (!tab) return;
+      iframe = tab.frame;
+      tabs.forEach(item => { item.frame.style.display = item.id === tab.id && !item.home ? 'block' : 'none'; });
+      homeSplash.style.display = tab.home ? 'flex' : 'none';
+      input.value = tab.url || '';
+      renderTabs();
+    }
+
+    function bindFrame(tab) {
+      tab.frame.addEventListener('load', () => {
+        if (tab.home) return;
+        try {
+          const loc = tab.frame.contentWindow.location.href;
+          if (loc.includes(__uv$config.prefix)) {
+            const rawUrl = loc.split(__uv$config.prefix)[1];
+            if (rawUrl) {
+              tab.url = __uv$config.decodeUrl(rawUrl);
+              tab.title = tab.frame.contentDocument?.title || new URL(tab.url).hostname || 'Website';
+              if (tab.id === activeTabId) input.value = tab.url;
+              renderTabs();
+            }
+          }
+        } catch {}
+      });
+    }
+
+    function createTab(useInitialFrame = false) {
+      const frame = useInitialFrame ? iframe : document.createElement('iframe');
+      if (!useInitialFrame) {
+        frame.className = 'web-frame';
+        frame.title = 'Website';
+        frame.allow = 'autoplay; fullscreen; gamepad';
+        frame.setAttribute('allowfullscreen', '');
+        document.querySelector('.browser-viewport').appendChild(frame);
+      }
+      const tab = { id: ++tabCounter, title: 'New Tab', url: '', home: true, frame };
+      tabs.push(tab);
+      bindFrame(tab);
+      activateTab(tab.id);
+      setTimeout(() => input.focus(), 0);
+      return tab;
+    }
+
+    function activateTab(id) {
+      if (!tabs.some(tab => tab.id === id)) return;
+      activeTabId = id;
+      syncActiveView();
+    }
+
+    function closeTab(id) {
+      const index = tabs.findIndex(tab => tab.id === id);
+      if (index < 0) return;
+      const [closed] = tabs.splice(index, 1);
+      closed.frame.remove();
+      if (!tabs.length) { createTab(); return; }
+      if (activeTabId === id) activeTabId = tabs[Math.max(0, index - 1)].id;
+      syncActiveView();
+    }
+
+    createTab(true);
+    newTabButton.addEventListener('click', () => createTab());
 
     // Controls
     const btnBack = document.getElementById('btn-back');
@@ -555,14 +692,20 @@
       }
 
       try { await engineReady; } catch { return; }
+      const tab = currentTab() || createTab();
       // Hide Splash & Display Web Frame
+      tab.home = false;
+      tab.url = query;
+      try { tab.title = new URL(query).hostname.replace(/^www\./, '') || 'Website'; } catch { tab.title = 'Search'; }
       homeSplash.style.display = 'none';
+      iframe = tab.frame;
       iframe.style.display = 'block';
 
       // Encode URL with Ultraviolet
       const destinationUrl = __uv$config.prefix + __uv$config.encodeUrl(query);
       iframe.src = destinationUrl;
       input.value = query;
+      renderTabs();
     }
 
     // Form Event Handler
@@ -585,24 +728,31 @@
     });
 
     btnHome.addEventListener('click', () => {
+      const tab = currentTab();
+      if (!tab) return;
       iframe.src = 'about:blank';
       iframe.style.display = 'none';
+      tab.home = true;
+      tab.url = '';
+      tab.title = 'New Tab';
       homeSplash.style.display = 'flex';
       input.value = '';
+      renderTabs();
     });
 
-    // Sync input bar when iframe location updates
-    iframe.addEventListener('load', () => {
-      try {
-        const loc = iframe.contentWindow.location.href;
-        if (loc.includes(__uv$config.prefix)) {
-          const rawUrl = loc.split(__uv$config.prefix)[1];
-          if (rawUrl) {
-            input.value = __uv$config.decodeUrl(rawUrl);
-          }
-        }
-      } catch (e) {
-        // Handle cross-origin restrictions gracefully
+    document.addEventListener('keydown', event => {
+      if (!(event.ctrlKey || event.metaKey)) return;
+      if (event.key.toLowerCase() === 't') {
+        event.preventDefault();
+        createTab();
+      } else if (event.key.toLowerCase() === 'w') {
+        event.preventDefault();
+        closeTab(activeTabId);
+      } else if (event.key === 'Tab' && tabs.length > 1) {
+        event.preventDefault();
+        const index = tabs.findIndex(tab => tab.id === activeTabId);
+        const offset = event.shiftKey ? -1 : 1;
+        activateTab(tabs[(index + offset + tabs.length) % tabs.length].id);
       }
     });
   </script>
