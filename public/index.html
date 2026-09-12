@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nova Gateway Browser</title>
+  <title>Nova Browser</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -266,6 +266,123 @@
       justify-content: center;
       font-weight: bold;
     }
+
+    /* Nova product system: compact navy surfaces and a quiet dotted canvas. */
+    :root {
+      --cyan: #8fb9f8;
+      --violet: #9b8ff6;
+      --magenta: #8fb9f8;
+      --bg: #101827;
+      --header-bg: #0b1320;
+      --input-bg: #111c2c;
+      --border: #293b57;
+    }
+    body {
+      background-color: var(--bg);
+      background-image: radial-gradient(circle, #253249 2.5px, transparent 2.5px);
+      background-size: 24px 24px;
+    }
+    .bg-mesh { display: none; }
+    .browser-bar {
+      min-height: 68px;
+      padding: 10px 20px;
+      gap: 10px;
+      background: var(--header-bg);
+      border-bottom-color: #1d2b40;
+      box-shadow: none;
+      backdrop-filter: none;
+    }
+    .browser-brand {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: max-content;
+      margin-right: 8px;
+      color: #f0f6ff;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -.04em;
+    }
+    .browser-brand .mark {
+      width: 25px;
+      height: 25px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: #eef5ff;
+      color: #101827;
+      font-size: 17px;
+      clip-path: polygon(40% 0,100% 0,67% 39%,91% 39%,28% 100%,39% 57%,8% 57%);
+    }
+    .browser-brand span:last-child { color: #91acd3; font-weight: 500; }
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      background: #142136;
+      color: #93a9c8;
+      box-shadow: none;
+    }
+    .icon-btn:hover { background: #1b2b44; color: #e4efff; transform: none; }
+    .address-wrapper {
+      height: 42px;
+      border-radius: 11px;
+      background: var(--input-bg);
+      border-color: #304561;
+      padding-right: 4px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.02);
+    }
+    .address-wrapper:focus-within {
+      border-color: #79a9eb;
+      box-shadow: 0 0 0 3px rgba(121,169,235,.12);
+      background: #111c2c;
+    }
+    .site-icon { color: #8fb9f8; }
+    .address-input { color: #eaf2ff; }
+    .status-container {
+      min-height: 36px;
+      border-radius: 9px;
+      background: #142136;
+      border-color: #293b57;
+      color: #93a9c8;
+    }
+    .status-dot { background: #d7a958; box-shadow: none; }
+    .status-dot.ready { background: #72d6b3; box-shadow: 0 0 0 4px rgba(114,214,179,.09); }
+    .browser-viewport { height: calc(100vh - 68px); }
+    .home-splash { justify-content: flex-start; padding: clamp(62px,10vh,110px) 24px 40px; }
+    .glass-card {
+      max-width: 680px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+      animation: none;
+    }
+    .home-lockup { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+    .home-lockup .mark { width: 42px; height: 42px; display: grid; place-items: center; background: #edf5ff; color: #101827; font-size: 28px; clip-path: polygon(40% 0,100% 0,67% 39%,91% 39%,28% 100%,39% 57%,8% 57%); }
+    h1 { margin: 0; color: #edf4ff; font-size: clamp(34px,5vw,48px); letter-spacing: -.055em; }
+    h1 .glow-text { color: #98b9e8; background: none; -webkit-text-fill-color: currentColor; animation: none; font-weight: 500; }
+    p.subtitle { margin: 10px 0 30px; color: #8ea3c1; font-size: 14px; }
+    .home-search-label { display: block; margin: 0 0 9px; text-align: left; color: #a9c2e8; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .home-search-hint { border: 1px solid #304561; background: #111c2c; border-radius: 14px; padding: 16px 18px; color: #879dbd; text-align: left; font-size: 13px; cursor: text; }
+    .shortcuts-grid { grid-template-columns: repeat(4,1fr); gap: 12px; margin-top: 18px; }
+    .shortcut-card { min-height: 96px; justify-content: center; border-radius: 13px; background: #131f32; border-color: #293b57; color: #b9cdea; }
+    .shortcut-card:hover { background: #192941; border-color: #6288bb; transform: translateY(-2px); }
+    .shortcut-icon { width: 34px; height: 34px; border-radius: 10px; background: #22344f!important; color: #bfd6f7!important; }
+    .home-meta { display: flex; justify-content: center; gap: 18px; margin-top: 28px; color: #7085a4; font-size: 10px; }
+    @media (max-width: 760px) {
+      .browser-bar { flex-wrap: wrap; padding: 9px 12px; }
+      .browser-brand { margin-right: auto; }
+      .nav-group { order: 2; }
+      .address-form { order: 3; min-width: calc(100% - 156px); }
+      .status-container { font-size: 0; width: 36px; padding: 0; justify-content: center; }
+      #btn-adblock { display: none; }
+      .browser-viewport { height: calc(100vh - 106px); }
+      .home-splash { padding-top: 44px; }
+      .shortcuts-grid { grid-template-columns: repeat(2,1fr); }
+    }
+    @media (prefers-reduced-motion: reduce) { * { animation: none!important; transition: none!important; } }
   </style>
 </head>
 <body>
@@ -279,6 +396,7 @@
 
   <!-- Top Browser Navigation Bar -->
   <header class="browser-bar">
+    <div class="browser-brand"><span class="mark">ϟ</span><strong>nova</strong><span>browser</span></div>
     <div class="nav-group">
       <button class="icon-btn" id="btn-back" title="Back">
         <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
@@ -319,8 +437,10 @@
     <!-- Home Dashboard Splash -->
     <div id="home-splash" class="home-splash">
       <div class="glass-card">
-        <h1>NOVA <span class="glow-text">GATEWAY</span></h1>
-        <p class="subtitle">Enter a website URL or search query to begin browsing.</p>
+        <div class="home-lockup"><span class="mark">ϟ</span><h1>nova <span class="glow-text">browser</span></h1></div>
+        <p class="subtitle">A focused gateway for the sites you use most.</p>
+        <span class="home-search-label">Start browsing</span>
+        <div class="home-search-hint" onclick="document.getElementById('address-input').focus()">Search Brave or type a website address</div>
         
         <!-- Quick App Launchers -->
         <div class="shortcuts-grid">
@@ -341,6 +461,7 @@
             <span>Wikipedia</span>
           </div>
         </div>
+        <div class="home-meta"><span>Private session</span><span>•</span><span>Built-in ad controls</span><span>•</span><span>Nova network</span></div>
       </div>
     </div>
 
