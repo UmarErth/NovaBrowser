@@ -1,8 +1,9 @@
-importScripts('/codec.js', '/transport.js');
-importScripts('/uv/uv.bundle.js');
-importScripts('/uv/uv.config.js');
-importScripts('/uv/uv.sw.js');
-importScripts('/adblock.js');
+// Versioned imports prevent a half-updated static asset cache from breaking installation.
+importScripts('/codec.js?v=3', '/transport.js?v=3');
+importScripts('/uv/uv.bundle.js?v=3');
+importScripts('/uv/uv.config.js?v=3');
+importScripts('/uv/uv.sw.js?v=3');
+importScripts('/adblock.js?v=3');
 
 const sw = new UVServiceWorker();
 sw.on('response', event => {
